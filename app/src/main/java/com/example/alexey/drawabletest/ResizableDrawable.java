@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -24,6 +25,8 @@ import java.util.Random;
  */
 public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGlobalLayoutListener {
 
+    private final static boolean NOT_DEBUG = true;
+
     private final WeakReference<ImageView> weakParent;
     private final WeakReference<ViewGroup.LayoutParams> weakParentLayoutParams;
     private int squareSize = 0;
@@ -33,12 +36,15 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
     private RectF lastDisplayRectF = null;
 
 
+    private RectF sourceRect = null;
     private Rect visibleRect = new Rect();
     private Rect tempRect = new Rect();
     private RectF tempRectF = new RectF();
     private Paint paint = new Paint();
     private boolean[] visibleSquares = new boolean[0];
     private Paint[] paints = new Paint[0];
+
+    private Matrix matrix = new Matrix();
 
     public ResizableDrawable(ImageView parent, ViewGroup.LayoutParams layoutParams, int squareCount) {
         this.weakParent = new WeakReference<ImageView>(parent);
@@ -80,29 +86,49 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
     @Override
     public void draw(Canvas canvas) {
         if (lastDisplayRectF != null) {
-            paint.setColor(Color.CYAN);
-            for (int i = 0; i < visibleSquares.length; i++) {
-                if (visibleSquares[i] == true) {
+            paint.setColor(Color.RED);
 
-                    getTileRect(lastDisplayRectF, tempRectF, i);
-                    //paint.setColor(color[i]);//(paint.getColor() + 0xff);//(new Random().nextInt() >> 8) ^ 0xff000000);
-                    canvas.drawRect(tempRectF, paints[i]);
-                    canvas.drawRect(tempRectF.left, tempRectF.top, tempRectF.left + 4, tempRectF.top + 4, paint);
-                    canvas.drawRect(tempRectF.right - 4, tempRectF.top, tempRectF.right, tempRectF.top + 4, paint);
-                    canvas.drawRect(tempRectF.left, tempRectF.bottom - 4, tempRectF.left + 4, tempRectF.bottom, paint);
-                    canvas.drawRect(tempRectF.right - 4, tempRectF.bottom - 4, tempRectF.right, tempRectF.bottom, paint);
-                    Log.d("ResizableDrawable", String.format("Draw rect %s", tempRectF.toShortString()));
+//            canvas.drawRect(lastDisplayRectF, paint);
+//            paint.setColor(Color.CYAN);
+
+            float size = 20;
+            float widthSide = (getBounds().width() * lastDisplayRectF.width()) / sourceRect.width();
+            float heightSide = (getBounds().height() * lastDisplayRectF.height()) / sourceRect.height();
+            canvas.drawRect(lastDisplayRectF.centerX() - widthSide / 2,lastDisplayRectF.top,lastDisplayRectF.centerX() + widthSide / 2, lastDisplayRectF.top + heightSide, paint);
+            paint.setColor(Color.CYAN);
+
+            Log.d("Draw", String.format("Drawing rect size %s canvas size %s", lastDisplayRectF.toShortString(), canvas.getClipBounds().toShortString()));
+            for (int i = 0; i < visibleSquares.length; i++) {
+                //if (visibleSquares[i] == true) {
+
+                getTileRect(lastDisplayRectF, tempRectF, i);
+                //paint.setColor(color[i]);//(paint.getColor() + 0xff);//(new Random().nextInt() >> 8) ^ 0xff000000);
+                canvas.drawRect(tempRectF, paints[i]);
+                canvas.drawRect(tempRectF.left, tempRectF.top, tempRectF.left + size, tempRectF.top + size, paint);
+                canvas.drawRect(tempRectF.right - size, tempRectF.top, tempRectF.right, tempRectF.top + size, paint);
+                canvas.drawRect(tempRectF.left, tempRectF.bottom - size, tempRectF.left + size, tempRectF.bottom, paint);
+                canvas.drawRect(tempRectF.right - size, tempRectF.bottom - size, tempRectF.right, tempRectF.bottom, paint);
+                paint.setStrokeWidth(20);
+                canvas.drawLine(tempRect.left,tempRect.top,tempRect.right,tempRect.bottom,paint);
+                paint.setStrokeWidth(1);
+                if (!NOT_DEBUG) {
+                    Log.d("ResizableDrawable", String.format("Draw rect %s", tempRectF.toString()));
                 }
+                //}
             }
+            paint.setColor(Color.GREEN);
+            canvas.drawRect(0, 0, 30, 30, paint);
         } else {
             for (int i = 0; i < visibleSquares.length; i++) {
-                if (visibleSquares[i] == true) {
-                    tempRect.set(0, i * squareSize, squareSize, i * squareSize + squareSize);
-                    paint.setColor(new Random().nextInt());
-                    canvas.drawRect(tempRect, paint);
-                }
+                //if (visibleSquares[i] == true) {
+                tempRect.set(0, i * squareSize, squareSize, i * squareSize + squareSize);
+                paint.setColor(new Random().nextInt());
+                canvas.drawRect(tempRect, paint);
+                //}
+                //}
             }
         }
+
     }
 
     @Override
@@ -151,7 +177,9 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
         ImageView imageView = weakParent.get();
         if (imageView != null) {
             imageView.getLocalVisibleRect(visibleRect);
-            Log.d("ResizableDrawable", String.format("View %d Visible rect is %s", imageView.getId(), visibleRect.toShortString()));
+            if (!NOT_DEBUG) {
+                Log.d("ResizableDrawable", String.format("View %d Visible rect is %s", imageView.getId(), visibleRect.toShortString()));
+            }
             for (int i = 0; i < currentSquareCount; i++) {
                 tempRect.set(0, i * squareSize, squareSize, i * squareSize + squareSize);
                 if (Rect.intersects(visibleRect, tempRect)) {
@@ -174,16 +202,24 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
             }
             builder.append(visibleSquares[i] == true ? "1" : "0");
         }
-        Log.d("ResizableDrawable", String.format("View %d Visible parts %s", imageView.getId(), builder.toString()));
+        if (!NOT_DEBUG) {
+            Log.d("ResizableDrawable", String.format("View %d Visible parts %s", imageView.getId(), builder.toString()));
+        }
 
         if (needRedraw) {
-            Log.d("ResizableDrawable", "!REDRAW!");
+            if (!NOT_DEBUG) {
+                Log.d("ResizableDrawable", "!REDRAW!");
+            }
             invalidateSelf();
         }
     }
 
     public void updateDrawable(RectF displayRect) {
-        this.lastDisplayRectF = displayRect;
+        if (sourceRect == null) {
+            sourceRect = new RectF(displayRect);
+        }
+
+        this.lastDisplayRectF =     displayRect;
         boolean needRedraw = false;
         ImageView imageView = weakParent.get();
         if (imageView != null) {
@@ -205,29 +241,37 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
             }
         }
 
-        StringBuilder builder = new StringBuilder(currentSquareCount * 2);
-        for (int i = 0; i < visibleSquares.length; i++) {
-            if (i != 0) {
-                builder.append(',');
+        if (!NOT_DEBUG) {
+            StringBuilder builder = new StringBuilder(currentSquareCount * 2);
+            for (int i = 0; i < visibleSquares.length; i++) {
+                if (i != 0) {
+                    builder.append(',');
+                }
+                builder.append(visibleSquares[i] == true ? "1" : "0");
             }
-            builder.append(visibleSquares[i] == true ? "1" : "0");
+
+            Log.d("ResizableDrawableF", String.format("View %d Visible parts %s", imageView.getId(), builder.toString()));
         }
-        Log.d("ResizableDrawableF", String.format("View %d Visible parts %s", imageView.getId(), builder.toString()));
 
         if (needRedraw) {
-            Log.d("ResizableDrawable", "!REDRAW!");
+            if (!NOT_DEBUG) {
+                Log.d("ResizableDrawable", "!REDRAW!");
+            }
             invalidateSelf();
         }
     }
 
     private void getTileRect(RectF displayRect, RectF destRect, int tileIndex) {
-        float widthFactor = displayRect.width() / getBounds().width();
-        float heightFactor = displayRect.height() / getBounds().height();
+        float widthFactor = getBounds().width() / displayRect.width();
+        float heightFactor = getBounds().height() / displayRect.height();
 
-        destRect.left = displayRect.left;
-        destRect.right = displayRect.left + squareSize * widthFactor;
-        destRect.top = displayRect.top + (tileIndex * squareSize) * heightFactor;
-        destRect.bottom = destRect.top + (squareSize) * heightFactor;
+        float widthSide = (getBounds().width() * displayRect.width()) / sourceRect.width();
+        float heightSide = (getBounds().height() * displayRect.height()) / sourceRect.height();
+
+        destRect.left = displayRect.centerX() - widthSide / 2;
+        destRect.top = displayRect.top + tileIndex * widthSide;
+        destRect.right = displayRect.centerX() + widthSide / 2;
+        destRect.bottom = destRect.top + widthSide;
     }
 
     private void setSquareCount(int count) {
@@ -238,7 +282,6 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
             this.squareSize = imageView.getMeasuredWidth();
 //            layoutParams.width = imageView.getMeasuredWidth();
 //            layoutParams.height = imageView.getMeasuredWidth() * currentSquareCount;
-            squareSize = imageView.getMeasuredWidth();
             setBounds(new Rect(0, 0, imageView.getMeasuredWidth(), imageView.getMeasuredWidth() * currentSquareCount));
             visibleSquares = new boolean[currentSquareCount];
             paints = new Paint[currentSquareCount];
@@ -247,10 +290,16 @@ public class ResizableDrawable extends Drawable implements ViewTreeObserver.OnGl
                 LinearGradient gradient = new LinearGradient(0, 0, squareSize, squareSize, Color.RED, Color.YELLOW, Shader.TileMode.CLAMP);
                 paints[i] = new Paint();
                 //paints[i].setShader(gradient);
-                paints[i].setColor(rnd.nextInt() ^ 0xff000000);
+                paints[i].setColor((rnd.nextInt() >> 8) | 0xff000000);
             }
-            //imageView.requestLayout();
-            invalidateSelf();
+//
+//            RectF mSrcDrawableRect = new RectF(0, 0, getBounds().width(), getBounds().height());
+//            RectF mDstDrawableRect = new RectF(0, 0, imageView.getMeasuredWidth(), imageView.getMeasuredHeight());
+//
+//            Matrix matrix = new Matrix();
+//            matrix.setRectToRect(mSrcDrawableRect, mDstDrawableRect, Matrix.ScaleToFit.CENTER);
+//            sourceRect = mDstDrawableRect;
+//            matrix.mapRect(sourceRect);
         }
     }
 }
