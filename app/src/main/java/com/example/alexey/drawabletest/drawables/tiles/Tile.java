@@ -17,16 +17,16 @@ public abstract class Tile {
 
     public Tile(RectF sourceRect){
         this.sourceRect = sourceRect;
-        setDrawingRect(sourceRect);
+        setScaleRect(sourceRect);
     }
 
     public abstract void draw(Canvas canvas);
 
-    public void setDrawingRect(RectF rect){
-        setDrawingRect(rect.left,rect.top,rect.right, rect.bottom);
+    public void setScaleRect(RectF rect){
+        setScaleRect(rect.left, rect.top, rect.right, rect.bottom);
     }
 
-    public void setDrawingRect(float left, float top, float right, float bottom){
+    public void setScaleRect(float left, float top, float right, float bottom){
         this.scaledRect.set(left, top, right, bottom);
         this.scaledRect.round(scaledRectRound);
     }
@@ -35,11 +35,11 @@ public abstract class Tile {
         this.isVisible = isVisible;
     }
 
-    public RectF getDrawingRect() {
+    public RectF getScaleRect() {
         return scaledRect;
     }
 
-    public Rect getDrawingRectRound() {
+    public Rect getScaleRectRound() {
         return scaledRectRound;
     }
 

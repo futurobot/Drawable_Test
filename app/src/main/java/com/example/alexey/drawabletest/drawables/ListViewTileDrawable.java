@@ -38,7 +38,7 @@ public class ListViewTileDrawable extends TileDrawable {
             if (i == tiles.length - 1 && imageHeight % imageWidth > 0) {
                 tileHeight = width + scaleFactor * (imageHeight % imageWidth);
             }
-            tiles[i].setDrawingRect(0f, i * width, width, tileHeight);
+            tiles[i].setScaleRect(0f, i * width, width, tileHeight);
         }
 
         ViewGroup.LayoutParams layoutParams = weakParentLayoutParams.get();
@@ -71,7 +71,7 @@ public class ListViewTileDrawable extends TileDrawable {
                 Log.d("ResizableDrawable", String.format("View %d Visible rect is %s", imageView.getId(), visibleRect.toShortString()));
             }
             for (int i = 0; i < tiles.length; i++) {
-                if (Rect.intersects(visibleRect, tiles[i].getDrawingRectRound())) {
+                if (Rect.intersects(visibleRect, tiles[i].getScaleRectRound())) {
                     if (tiles[i].isVisible() == false) {
                         tiles[i].setVisible(true);
                         needRedraw = true;
