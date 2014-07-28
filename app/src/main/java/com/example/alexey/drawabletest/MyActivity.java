@@ -1,5 +1,6 @@
 package com.example.alexey.drawabletest;
 
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -11,6 +12,8 @@ import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+
+import com.example.alexey.drawabletest.drawables.ListViewTileDrawable;
 
 
 public class MyActivity extends ActionBarActivity {
@@ -41,7 +44,10 @@ public class MyActivity extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_list_drawable) {
+            return true;
+        } else if(id == R.id.action_photoview_drawable){
+            startActivity(new Intent(this, PhotoViewLibraryActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -70,7 +76,7 @@ public class MyActivity extends ActionBarActivity {
                 convertView = getLayoutInflater().inflate(R.layout.list_item, parent, false);
             }
             final ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
-            imageView.setImageDrawable(new ResizableDrawable(imageView, imageView.getLayoutParams(), getItem(position)));
+            imageView.setImageDrawable(new ListViewTileDrawable(imageView, imageView.getLayoutParams(), 1800, 700 * (position + 1)));
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -93,8 +99,8 @@ public class MyActivity extends ActionBarActivity {
                 View itemView = view.getChildAt(i - firstVisibleItem);
                 ImageView imageView = (ImageView) itemView.findViewById(R.id.imageView);
                 Drawable drawable = imageView.getDrawable();
-                if(drawable instanceof ResizableDrawable){
-                    ((ResizableDrawable)drawable).updateDrawable();
+                if (drawable instanceof ListViewTileDrawable) {
+                    ((ListViewTileDrawable) drawable).updateDrawable();
                 }
             }
         }

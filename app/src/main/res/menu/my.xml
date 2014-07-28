@@ -2,8 +2,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MyActivity" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    <item android:id="@+id/action_list_drawable"
+        android:title="List drawable"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/action_photoview_drawable"
+        android:title="Photo view drawable"
         android:orderInCategory="100"
         app:showAsAction="never" />
 </menu>
